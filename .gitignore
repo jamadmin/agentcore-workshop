@@ -1,0 +1,20 @@
+# Projects you create during the workshop
+KopiRun/
+TallyTools/
+IntakeQA/
+*.replaced-*/
+exported/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+tally/agent/uv.lock
+
+# Node and CDK
+node_modules/
+cdk.out/
+
+.DS_Store
+.env
+.env.*

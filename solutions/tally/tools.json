@@ -1,0 +1,86 @@
+[
+  {
+    "name": "get_invoice",
+    "description": "Get an invoice with its line items and total.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "customer_id": {
+          "type": "string"
+        },
+        "invoice_id": {
+          "type": "string",
+          "description": "For example INV-2026-03"
+        }
+      },
+      "required": [
+        "customer_id",
+        "invoice_id"
+      ]
+    }
+  },
+  {
+    "name": "get_usage",
+    "description": "Get a customer's metered usage for one month.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "customer_id": {
+          "type": "string"
+        },
+        "month": {
+          "type": "string",
+          "description": "YYYY-MM"
+        }
+      },
+      "required": [
+        "customer_id",
+        "month"
+      ]
+    }
+  },
+  {
+    "name": "issue_credit",
+    "description": "Issue a credit to a customer's account. It is applied to their next invoice.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "customer_id": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "integer",
+          "description": "Credit in whole US dollars"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "customer_id",
+        "amount",
+        "reason"
+      ]
+    }
+  },
+  {
+    "name": "explain_invoice",
+    "description": "Explain how an invoice total was calculated: every subscription that was active in the period, the usage rated against each, and every fee and credit.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "customer_id": {
+          "type": "string"
+        },
+        "invoice_id": {
+          "type": "string",
+          "description": "For example INV-2026-03"
+        }
+      },
+      "required": [
+        "customer_id",
+        "invoice_id"
+      ]
+    }
+  }
+]
