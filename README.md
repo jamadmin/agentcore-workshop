@@ -4,7 +4,7 @@ Code and files for **Build, deploy and operate agents with AWS** (AWS Startups x
 
 ```bash
 cd ~
-git clone <this repo> agentcore-workshop
+git clone https://github.com/jamadmin/agentcore-workshop.git agentcore-workshop
 cd agentcore-workshop
 source scripts/env.sh
 scripts/check-setup.sh
