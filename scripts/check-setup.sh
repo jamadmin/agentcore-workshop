@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # Checks everything the workshop needs. Each line says PASS, FAIL or PENDING, with a hint.
+# Run this, don't source it: sourcing would run it in your own shell and could close it.
+(return 0 2>/dev/null) && { echo "This is a script, so run it rather than sourcing it: ${WORKSHOP:-.}/scripts/check-setup.sh" >&2; return 1; }
 set -uo pipefail
 source "$(dirname "$0")/lib/common.sh"
 
@@ -56,11 +58,11 @@ fi
 
 # The three sample APIs, called directly once each
 check_api() {  # check_api <name> <label> <payload> <field that must be in the reply>
-  local out tmp status
+  local out tmp fn_error
   tmp="$(mktemp)"
-  if status="$(aws lambda invoke --function-name "agentcore-workshop-$1-api" --cli-binary-format raw-in-base64-out \
+  if fn_error="$(aws lambda invoke --function-name "agentcore-workshop-$1-api" --cli-binary-format raw-in-base64-out \
       --payload "$3" "$tmp" --query 'FunctionError' --output text 2>&1)" \
-      && [[ "$status" == None ]] && grep -q "\"$4\"" "$tmp"; then
+      && [[ "$fn_error" == None ]] && grep -q "\"$4\"" "$tmp"; then
     line PASS "$2" "agentcore-workshop-$1-api"
   else
     line FAIL "$2" "agentcore-workshop-$1-api didn't answer. Re-run env.sh, or ask a facilitator"

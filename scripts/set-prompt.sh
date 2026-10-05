@@ -2,6 +2,8 @@
 # Replaces a harness's system prompt in the AgentCore project you're in, ready to deploy.
 # Run it from the project folder, for example $WORKSHOP/IntakeQA.
 #   set-prompt.sh intake_agent $WORKSHOP/intake/system-prompt-v2.md
+# Run this, don't source it: sourcing would run it in your own shell and could close it.
+(return 0 2>/dev/null) && { echo "This is a script, so run it rather than sourcing it: ${WORKSHOP:-.}/scripts/set-prompt.sh" >&2; return 1; }
 set -euo pipefail
 source "$(dirname "$0")/lib/common.sh"
 [[ $# -eq 2 ]] || die "Usage: set-prompt.sh <harness name> <prompt file>"

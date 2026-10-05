@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # Removes the three sample APIs, if you deployed them yourself with deploy-backends.sh.
+# Run this, don't source it: sourcing would run it in your own shell and could close it.
+(return 0 2>/dev/null) && { echo "This is a script, so run it rather than sourcing it: ${WORKSHOP:-.}/scripts/destroy-backends.sh" >&2; return 1; }
 set -euo pipefail
 source "$(dirname "$0")/lib/common.sh"
 

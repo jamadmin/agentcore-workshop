@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Turns on CloudWatch Transaction Search for this account and region: lets X-Ray write
 # spans to CloudWatch Logs, then sends trace segments there. Safe to run twice.
+# Run this, don't source it: sourcing would run it in your own shell and could close it.
+(return 0 2>/dev/null) && { echo "This is a script, so run it rather than sourcing it: ${WORKSHOP:-.}/scripts/enable-transaction-search.sh" >&2; return 1; }
 set -euo pipefail
 source "$(dirname "$0")/lib/common.sh"
 

@@ -5,6 +5,8 @@
 # It looks for anything with the scenario's names (built in the console or with the
 # CLI), lists it, and asks before replacing it. Then it builds the finished version
 # with the AgentCore CLI, the same commands as the terminal path, and deploys it.
+# Run this, don't source it: sourcing would run it in your own shell and could close it.
+(return 0 2>/dev/null) && { echo "This is a script, so run it rather than sourcing it: ${WORKSHOP:-.}/scripts/catch-up.sh" >&2; return 1; }
 set -euo pipefail
 source "$(dirname "$0")/lib/common.sh"
 need agentcore "Install it with: npm install -g @aws/agentcore"

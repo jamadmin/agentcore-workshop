@@ -1,7 +1,7 @@
 # Shared by the workshop scripts. Not meant to be run on its own.
 # Loads env.sh if this terminal hasn't, so every script works in a fresh terminal.
 
-_lib_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_lib_dir="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 if [[ -z "${WORKSHOP:-}" || -z "${AWS_REGION:-}" ]]; then
   # shellcheck disable=SC1091
   source "$_lib_dir/../env.sh" 2>/dev/null
@@ -26,15 +26,15 @@ agentcore_py() {
 
 # Call one of the sample APIs directly: invoke_backend <kopi|tally|intake> '<json payload>'
 invoke_backend() {
-  local out status
+  local out fn_error
   out="$(mktemp)"
-  if ! status="$(aws lambda invoke --function-name "agentcore-workshop-$1-api" \
+  if ! fn_error="$(aws lambda invoke --function-name "agentcore-workshop-$1-api" \
       --cli-binary-format raw-in-base64-out --payload "$2" "$out" \
       --query 'FunctionError' --output text 2>&1)"; then
     rm -f "$out"
-    die "Couldn't call agentcore-workshop-$1-api: $status"
+    die "Couldn't call agentcore-workshop-$1-api: $fn_error"
   fi
-  if [[ "$status" != "None" && -n "$status" ]]; then
+  if [[ "$fn_error" != "None" && -n "$fn_error" ]]; then
     cat "$out" >&2; rm -f "$out"
     die "agentcore-workshop-$1-api returned an error."
   fi

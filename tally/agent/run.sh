@@ -2,6 +2,8 @@
 # Starts the Tally agent in this terminal, with tracing to CloudWatch switched on.
 #   ./run.sh before  --customer kettle    the original agent, tools call the backend directly
 #   ./run.sh gateway --customer kettle    the same agent, tools from the tally-gw Gateway
+# Run this, don't source it: sourcing would run it in your own shell and could close it.
+(return 0 2>/dev/null) && { echo "This is a script, so run it rather than sourcing it: ./run.sh" >&2; return 1; }
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 source "$here/../../scripts/lib/common.sh"
