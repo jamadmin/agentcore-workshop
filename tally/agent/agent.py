@@ -13,7 +13,7 @@ from strands import Agent, tool
 from common import chat, model, parse_args, start_session, system_prompt
 
 FUNCTION = os.environ.get("TALLY_API_FUNCTION", "agentcore-workshop-tally-api")
-_lambda = boto3.client("lambda", region_name=os.environ.get("AWS_REGION", "ap-southeast-1"))
+_lambda = boto3.client("lambda", region_name=os.environ.get("AWS_REGION", "us-west-2"))
 
 
 def call_backend(name, **args):

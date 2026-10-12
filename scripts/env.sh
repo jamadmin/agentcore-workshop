@@ -7,7 +7,7 @@
 
 _ws_here="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 export WORKSHOP="$(cd "$_ws_here/.." && pwd)"
-export AWS_REGION="${WORKSHOP_REGION:-ap-southeast-1}"
+export AWS_REGION="${WORKSHOP_REGION:-us-west-2}"
 export AWS_DEFAULT_REGION="$AWS_REGION"
 export AWS_PAGER=""
 

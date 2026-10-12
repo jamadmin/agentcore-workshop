@@ -39,10 +39,10 @@ if ident="$(aws sts get-caller-identity --query Account --output text 2>&1)"; th
 else
   line FAIL "Credentials" "no working AWS credentials. Open a new terminal from the code editor"
 fi
-if [[ "$AWS_REGION" == ap-southeast-1 ]]; then
+if [[ "$AWS_REGION" == "${WORKSHOP_REGION:-us-west-2}" ]]; then
   line PASS "Region" "$AWS_REGION"
 else
-  line FAIL "Region" "$AWS_REGION; the workshop runs in ap-southeast-1"
+  line FAIL "Region" "$AWS_REGION; the workshop runs in ${WORKSHOP_REGION:-us-west-2}"
 fi
 
 # One tiny model call

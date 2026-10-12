@@ -37,7 +37,7 @@ import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
 
-REGION = os.environ.get("AWS_REGION") or os.environ.get("AWS_DEFAULT_REGION") or "ap-southeast-1"
+REGION = os.environ.get("AWS_REGION") or os.environ.get("AWS_DEFAULT_REGION") or "us-west-2"
 
 # What catch-up.sh may replace, per scenario.
 SCENARIOS = {
