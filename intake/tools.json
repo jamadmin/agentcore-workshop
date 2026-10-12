@@ -2,15 +2,24 @@
   {
     "name": "list_queue",
     "description": "List invoices waiting for approval: invoice ID, supplier, currency and extracted total.",
-    "inputSchema": { "type": "object", "properties": {} }
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    }
   },
   {
     "name": "get_invoice",
     "description": "Get one invoice: the extracted fields, the total exactly as printed on the document (raw_total_text), and the extractor's confidence from 0 to 1.",
     "inputSchema": {
       "type": "object",
-      "properties": { "invoice_id": { "type": "string" } },
-      "required": ["invoice_id"]
+      "properties": {
+        "invoice_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "invoice_id"
+      ]
     }
   }
 ]

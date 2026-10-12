@@ -2,7 +2,10 @@
   {
     "name": "get_menu",
     "description": "List the drinks on today's menu at Block 88 Kopitiam, with prices in SGD.",
-    "inputSchema": { "type": "object", "properties": {} }
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    }
   },
   {
     "name": "place_order",
@@ -10,11 +13,24 @@
     "inputSchema": {
       "type": "object",
       "properties": {
-        "person":   { "type": "string", "description": "First name of the person the drinks are for" },
-        "drink":    { "type": "string", "description": "Full drink name, for example kopi-o siew dai peng" },
-        "quantity": { "type": "string", "description": "How many" }
+        "person": {
+          "type": "string",
+          "description": "First name of the person the drinks are for"
+        },
+        "drink": {
+          "type": "string",
+          "description": "Full drink name, for example kopi-o siew dai peng"
+        },
+        "quantity": {
+          "type": "string",
+          "description": "How many"
+        }
       },
-      "required": ["person", "drink", "quantity"]
+      "required": [
+        "person",
+        "drink",
+        "quantity"
+      ]
     }
   },
   {
@@ -22,13 +38,23 @@
     "description": "Get a person's recent orders, newest first.",
     "inputSchema": {
       "type": "object",
-      "properties": { "person": { "type": "string", "description": "First name" } },
-      "required": ["person"]
+      "properties": {
+        "person": {
+          "type": "string",
+          "description": "First name"
+        }
+      },
+      "required": [
+        "person"
+      ]
     }
   },
   {
     "name": "get_run",
     "description": "Show everything on today's run: who ordered what, quantities and the total.",
-    "inputSchema": { "type": "object", "properties": {} }
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    }
   }
 ]

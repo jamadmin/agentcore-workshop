@@ -1,5 +1,5 @@
 # One question per line. intake-ask.sh asks each in its own session.
 What's the total value of invoices waiting for approval?
-Which invoices are over 5,000 in any currency?
-What does Nordlicht GmbH's latest invoice come to?
+Which invoices are over S$5,000?
+How much is the Lucky Star Print invoice?
 Is anything in the queue unusual?

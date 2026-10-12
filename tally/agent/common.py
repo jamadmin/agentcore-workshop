@@ -2,6 +2,7 @@
 import argparse
 import os
 import uuid
+from datetime import date
 from pathlib import Path
 
 from opentelemetry import baggage, context
@@ -14,6 +15,8 @@ HERE = Path(__file__).resolve().parent
 def parse_args():
     parser = argparse.ArgumentParser(description="Tally billing support agent")
     parser.add_argument("--customer", required=True, help="Customer ID, for example kettle")
+    parser.add_argument("--policy-session", action="store_true",
+                        help="Gateway version only: send a policy session ID so temporal policies can see this conversation's history")
     return parser.parse_args()
 
 
@@ -22,7 +25,8 @@ def model():
 
 
 def system_prompt(customer_id):
-    return (HERE / "system-prompt.md").read_text(encoding="utf-8").replace("{customer_id}", customer_id)
+    text = (HERE / "system-prompt.md").read_text(encoding="utf-8")
+    return text.replace("{customer_id}", customer_id).replace("{today}", date.today().strftime("%-d %B %Y"))
 
 
 def start_session():

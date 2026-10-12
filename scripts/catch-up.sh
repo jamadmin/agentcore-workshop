@@ -70,9 +70,11 @@ build_kopi_run() {
   agentcore add gateway --name kopi-gw --authorizer-type AWS_IAM
   agentcore add gateway-target --type lambda-function-arn --name kopi-api --lambda-arn "$arn" \
     --tool-schema-file "$WORKSHOP/solutions/kopi-run/tools.json" --gateway kopi-gw
+  agentcore deploy -y   # the harness's gateway tool looks the Gateway up, so it has to exist first
   agentcore add harness --name kopi_agent --model-provider bedrock \
     --system-prompt "$(cat "$WORKSHOP/kopi-run/system-prompt.md")" --max-iterations 20
   agentcore add tool --harness kopi_agent --type agentcore_gateway --name kopi --gateway kopi-gw
+  "$WORKSHOP/scripts/set-memory.sh" kopi_agent
   agentcore deploy -y
   "$WORKSHOP/scripts/kopi.sh" reset
 }
@@ -106,6 +108,7 @@ build_intake() {
   agentcore add gateway --name intake-gw --authorizer-type AWS_IAM
   agentcore add gateway-target --type lambda-function-arn --name intake-api --lambda-arn "$arn" \
     --tool-schema-file "$WORKSHOP/intake/tools.json" --gateway intake-gw
+  agentcore deploy -y   # the harness's gateway tool looks the Gateway up, so it has to exist first
   agentcore add harness --name intake_agent --model-provider bedrock \
     --system-prompt "$(cat "$WORKSHOP/intake/system-prompt-v2.md")" --max-iterations 20
   agentcore add tool --harness intake_agent --type agentcore_gateway --name intake --gateway intake-gw
@@ -113,8 +116,6 @@ build_intake() {
   agentcore add evaluator --name AmountCheck --level TRACE --rating-scale pass-fail \
     --model global.anthropic.claude-sonnet-4-6 \
     --instructions "$(cat "$WORKSHOP/intake/evaluators/amount-check.txt")"
-  agentcore add online-eval --name intake_live --runtime intake_agent \
-    --evaluator AmountCheck Builtin.Correctness --sampling-rate 100 --enable-on-create
   agentcore deploy -y
 }
 
@@ -131,5 +132,5 @@ echo "Done in $(( ($(date +%s) - started) / 60 )) min. The finished project is i
 case "$scenario" in
   kopi-run) echo "Carry on from 'Send it a rush of orders'." ;;
   tally)    echo "Carry on with: cd \$WORKSHOP/tally/agent && ./run.sh gateway --customer kettle" ;;
-  intake)   echo "Carry on from the wrap-up page: ask the questions again with intake-ask.sh, then check the scores." ;;
+  intake)   echo "Online evaluation isn't set up by this script: create intake_live in the console (Score live traffic, Console tab), then ask the questions again with intake-ask.sh." ;;
 esac

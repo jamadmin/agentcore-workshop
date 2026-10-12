@@ -15,8 +15,10 @@ KopiRun_kopi_agent), so a name that ends in _<name> or -<name> also matches.
 
 Commands:
     harness-arn <name>
-    gateway-url <name>
+    gateway-url <name>                 the MCP endpoint, <gateway URL>/mcp
     gateway-arn <name>
+    harness-runtime-arn <name>         the Runtime a harness runs on
+    evaluator-arn <name>               Builtin.* or a custom evaluator, found by name
     burst <harness> <n>
     ask <harness> <questions-file>
     inventory <scenario>               list same-named resources as JSON
@@ -143,12 +145,37 @@ def cmd_harness_arn(name):
     print(find_harness(name)["arn"])
 
 
+def mcp_url(gateway_url):
+    """GetGateway returns the gateway's base URL; MCP clients talk to <base>/mcp."""
+    url = gateway_url.rstrip("/")
+    return url if url.endswith("/mcp") else url + "/mcp"
+
+
 def cmd_gateway_url(name):
-    print(find_gateway(name)["gatewayUrl"])
+    print(mcp_url(find_gateway(name)["gatewayUrl"]))
 
 
 def cmd_gateway_arn(name):
     print(find_gateway(name)["gatewayArn"])
+
+
+def cmd_harness_runtime_arn(name):
+    """A harness runs on an AgentCore Runtime; evaluations and traces are keyed on that runtime."""
+    h = find_harness(name)
+    detail = control().get_harness(harnessId=h["harnessId"])["harness"]
+    arn = (detail.get("environment") or {}).get("agentCoreRuntimeEnvironment", {}).get("agentRuntimeArn")
+    if not arn:
+        fail(f"Harness {h['harnessName']} has no runtime yet. Is it READY?")
+    print(arn)
+
+
+def cmd_evaluator_arn(name):
+    """Builtin.* names map to the public built-in ARNs; anything else is looked up by name."""
+    if name.startswith("Builtin."):
+        print(f"arn:aws:bedrock-agentcore:::evaluator/{name}")
+        return
+    custom = [e for e in paged(control().list_evaluators, "evaluators") if e.get("evaluatorType", "").upper() != "BUILTIN"]
+    print(pick(custom, name, "evaluatorName", "evaluator")["evaluatorArn"])
 
 
 BURST_PEOPLE = [
@@ -290,6 +317,8 @@ COMMANDS = {
     "harness-arn": (cmd_harness_arn, 1),
     "gateway-url": (cmd_gateway_url, 1),
     "gateway-arn": (cmd_gateway_arn, 1),
+    "harness-runtime-arn": (cmd_harness_runtime_arn, 1),
+    "evaluator-arn": (cmd_evaluator_arn, 1),
     "burst": (cmd_burst, 2),
     "ask": (cmd_ask, 2),
     "inventory": (cmd_inventory, 1),

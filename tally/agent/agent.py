@@ -34,7 +34,7 @@ def get_invoice(customer_id: str, invoice_id: str) -> str:
 
 @tool
 def get_usage(customer_id: str, month: str) -> str:
-    """Get a customer's metered usage for one month.
+    """Get how many people at a customer used the software in one month.
 
     Args:
         customer_id: The customer's ID.
@@ -49,7 +49,7 @@ def issue_credit(customer_id: str, amount: int, reason: str) -> str:
 
     Args:
         customer_id: The customer's ID.
-        amount: Credit in whole US dollars.
+        amount: Credit in whole Singapore dollars.
         reason: Why the credit is being issued.
     """
     return call_backend("issue_credit", customer_id=customer_id, amount=amount, reason=reason)

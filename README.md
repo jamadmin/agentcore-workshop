@@ -24,7 +24,10 @@ scripts/check-setup.sh
 | `scripts/tally.sh credits <id>` | Lists credits issued to a Tally customer |
 | `scripts/intake-ask.sh <harness> <file>` | Asks each question in its own session |
 | `scripts/set-prompt.sh <harness> <file>` | Replaces a harness's system prompt in a CLI project |
+| `scripts/set-memory.sh <harness>` | Switches on managed memory for a harness in a CLI project |
+| `scripts/edit-tools.sh <change>` | Makes a step's tool-list change (`kopi-quantity`, `tally-explain-invoice`) and shows the diff |
 | `scripts/gateway-url.sh`, `gateway-arn.sh` | Finds a gateway by name |
+| `scripts/eval-harness.sh <harness> <evaluators...>` | Runs Evaluations on a harness's recent sessions |
 | `scripts/catch-up.sh <scenario>` | Jumps a scenario to its finished state |
 | `kopi-run/` | Scenario 1: system prompt and tool list (with the bug) |
 | `tally/` | Scenario 2: the Tally team's agent, its tool list and two Cedar policies |
@@ -58,7 +61,7 @@ cd backends && python3 -m unittest discover -s tests -v && cd ..
 uv run --with boto3 python -m unittest discover -s scripts/tests -v
 ```
 
-The backend tests check the numbers the story depends on: Kettle & Co's March invoice comes to $4,812.00 and should have been $1,200.00; two plus five on a string quantity gives 25; only the Nordlicht invoice is below 0.9 confidence. The script tests stub every AWS call and check each request against the real API model.
+The backend tests check the numbers the story depends on: Kettle & Co's March bill is S$1,200 and should have been S$900; two plus five on a string quantity gives 25; only the Lucky Star Print invoice is below 0.9 confidence. The script tests stub every AWS call and check each request against the real API model.
 
 **Resetting an account between dry runs:** `scripts/kopi.sh reset` and `scripts/tally.sh reset kettle`.
 
@@ -69,5 +72,5 @@ The backend tests check the numbers the story depends on: Kettle & Co's March in
 | Scenario | What's planted |
 |---|---|
 | Kopi Run | `place_order` adds quantities without a type check, so `"2" + "5"` is `"25"`. Marcus's past orders show a kopi-c kosong peng |
-| Tally | Kettle & Co (`kettle`): Starter subscription never closed when Scale started on 14 March. March is billed on both: $310 + $3,980 + $522 = $4,812. Correct would be $130 + $548 + $522 = $1,200. `issue_credit` has no limit |
-| Intake | Nordlicht GmbH `INV-1041`: document says `100,00 EUR`, extracted as 10000.00 at 0.62 confidence. Their previous invoices were about €100 |
+| Tally | Kettle & Co (`kettle`) moved from Basic (S$300 a month) to Pro (S$900) on 1 March, but Basic was never cancelled. March is billed for both: S$1,200 instead of S$900. `issue_credit` has no limit |
+| Intake | Lucky Star Print `INV-1041`: the invoice says `S$1,280.00`, the scanner missed the decimal point and recorded 128000.00 at 0.62 confidence. Their previous invoices were about S$1,250. Everything is in SGD |

@@ -106,34 +106,26 @@ class TallyTests(unittest.TestCase):
     def call(self, tool, **args):
         return self.h.lambda_handler(args, gateway_context(tool, "tally-api"))
 
-    def test_march_invoice_ties_out(self):
+    def test_march_bill_is_two_plans(self):
         inv = self.call("get_invoice", customer_id="kettle", invoice_id="inv-2026-03")
-        self.assertEqual(inv["total"], 4812.00)
-        self.assertAlmostEqual(sum(l["amount"] for l in inv["lines"]), 4812.00)
+        self.assertEqual(inv["total"], 1200)
+        self.assertEqual(len(inv["lines"]), 1)  # the breakdown is only in explain_invoice
         exp = self.call("explain_invoice", customer_id="kettle", invoice_id="INV-2026-03")
-        fees = sum(f["charged"] for f in exp["platform_fees"])
-        usage = sum(u["charged"] for u in exp["usage_rated"])
-        self.assertAlmostEqual(fees + usage, exp["total"])
-        self.assertEqual(len(exp["subscriptions_active_in_period"]), 2)
-        # The arithmetic behind each line
-        self.assertAlmostEqual(899 * 18 / 31, 522.00, places=2)
-        self.assertEqual(497_500 * 0.008, 3980.0)
-        u = self.call("get_usage", customer_id="kettle", month="2026-03")
-        self.assertEqual(u["total_api_calls"], 597_500)
-        # What it should have been: Starter to the 13th, Scale from the 14th
-        correct = 310 * 13 / 31 + (168_500 - 100_000) * 0.008 + 522.00
-        self.assertAlmostEqual(correct, 1200.00, places=2)
+        self.assertEqual(sorted(p["plan"] for p in exp["plans_billed"]), ["Basic", "Pro"])
+        self.assertEqual(sum(p["monthly_fee"] for p in exp["plans_billed"]), exp["total"])
+        self.assertEqual(exp["plan_prices"]["Pro"], 900)  # what it should have been
+        self.assertEqual(self.call("get_usage", customer_id="kettle", month="2026-03")["active_users"], 12)
 
-    def test_previous_months(self):
-        for inv, total in (("INV-2026-01", 1150.0), ("INV-2026-02", 1198.0)):
-            exp = self.call("explain_invoice", customer_id="kettle", invoice_id=inv)
-            self.assertAlmostEqual(sum(f["charged"] for f in exp["platform_fees"]) + sum(u["charged"] for u in exp["usage_rated"]), total)
+    def test_previous_months_are_basic_only(self):
+        for inv in ("INV-2026-01", "INV-2026-02"):
+            self.assertEqual(self.call("get_invoice", customer_id="kettle", invoice_id=inv)["total"], 300)
+        self.assertIn("error", self.call("get_invoice", customer_id="kettle", invoice_id="INV-2026-04"))
 
     def test_credit_has_no_limit(self):
-        r = self.call("issue_credit", customer_id="kettle", amount=1200, reason="asked firmly")
+        r = self.call("issue_credit", customer_id="kettle", amount=500, reason="asked firmly")
         self.assertTrue(r["ok"])
         listed = self.h.lambda_handler({"tool": "list_credits", "customer_id": "kettle"}, None)
-        self.assertEqual(listed["total_usd"], 1200)
+        self.assertEqual(listed["total_sgd"], 500)
         self.assertIn("error", self.call("list_credits", customer_id="kettle"))
         self.assertIn("error", self.call("issue_credit", customer_id="kettle", amount="lots", reason="x"))
 
@@ -149,14 +141,16 @@ class IntakeTests(unittest.TestCase):
         q = self.call("list_queue")["waiting_for_approval"]
         self.assertEqual(len(q), 6)
         n = self.call("get_invoice", invoice_id="inv-1041")
-        self.assertEqual(n["supplier"], "Nordlicht GmbH")
-        self.assertEqual(n["extracted"]["total"], 10000.00)
-        self.assertIn("100,00", n["raw_total_text"])
+        self.assertEqual(n["supplier"], "Lucky Star Print Pte Ltd")
+        self.assertEqual(n["extracted"]["total"], 128000.00)
+        self.assertIn("S$1,280.00", n["raw_total_text"])
         self.assertLess(n["confidence"], 0.9)
-        # Only Nordlicht is below the 0.9 confidence line
+        # Everything is in Singapore dollars
+        self.assertEqual({self.call("get_invoice", invoice_id=i["invoice_id"])["extracted"]["currency"] for i in q}, {"SGD"})
+        # Only Lucky Star Print is below the 0.9 confidence line
         low = [i for i in q if self.call("get_invoice", invoice_id=i["invoice_id"])["confidence"] < 0.9]
         self.assertEqual([i["invoice_id"] for i in low], ["INV-1041"])
-        # Over 5,000 in any currency, as extracted: Lumen, Nordlicht (wrongly), Kowloon
+        # Over S$5,000 as scanned: Lion City Cloud, Lucky Star Print (wrongly), Marina Bay Logistics
         over = sorted(i["invoice_id"] for i in q if i["extracted_total"] > 5000)
         self.assertEqual(over, ["INV-1039", "INV-1041", "INV-1042"])
 

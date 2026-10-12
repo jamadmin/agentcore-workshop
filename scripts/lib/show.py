@@ -25,8 +25,8 @@ def show_credits(reply):
     if not credits:
         print("  (none)")
     for c in credits:
-        print(f"  {c['issued_at']}  ${c['amount']:>6,}  {c['reason'][:60]}")
-    print(f"  Total: ${reply.get('total_usd', 0):,}")
+        print(f"  {c['issued_at']}  S${c['amount']:>6,}  {c['reason'][:60]}")
+    print(f"  Total: S${reply.get('total_sgd', 0):,}")
 
 
 def show_inventory(items):

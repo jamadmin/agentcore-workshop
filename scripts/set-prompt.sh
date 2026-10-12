@@ -11,21 +11,25 @@ harness="$1"; prompt="$2"
 [[ -f "$prompt" ]] || die "No such file: $prompt"
 [[ -f agentcore/agentcore.json ]] || die "Run this from your AgentCore project folder (the one with agentcore/agentcore.json)."
 dir="app/$harness"
-[[ -d "$dir" ]] || die "No $dir here. Is the harness called $harness in this project?"
+[[ -f "$dir/harness.json" ]] || die "No $dir/harness.json here. Is the harness called $harness in this project?"
 
-if [[ -f "$dir/system-prompt.md" ]]; then
-  # The CLI keeps the prompt in its own file next to harness.json.
-  cp "$prompt" "$dir/system-prompt.md"
-  echo "Updated $dir/system-prompt.md."
-else
-  python3 - "$dir/harness.json" "$prompt" <<'PY'
-import json, sys
-path, prompt = sys.argv[1], open(sys.argv[2], encoding="utf-8").read()
+# The CLI deploys harness.json's systemPrompt when it's set; system-prompt.md is only read
+# when harness.json has no systemPrompt. Write to whichever one the deploy will use.
+python3 - "$dir" "$prompt" <<'PY'
+import json, os, sys
+d, prompt_file = sys.argv[1], sys.argv[2]
+prompt = open(prompt_file, encoding="utf-8").read()
+path = os.path.join(d, "harness.json")
 cfg = json.load(open(path, encoding="utf-8"))
-cfg["systemPrompt"] = prompt
-json.dump(cfg, open(path, "w", encoding="utf-8"), indent=2)
-open(path, "a").write("\n")
+if "systemPrompt" in cfg or not os.path.exists(os.path.join(d, "system-prompt.md")):
+    cfg["systemPrompt"] = prompt
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(cfg, fh, indent=2)
+        fh.write("\n")
+    print(f"Updated systemPrompt in {path}.")
+else:
+    with open(os.path.join(d, "system-prompt.md"), "w", encoding="utf-8") as fh:
+        fh.write(prompt)
+    print(f"Updated {d}/system-prompt.md.")
 PY
-  echo "Updated systemPrompt in $dir/harness.json."
-fi
 echo "Run agentcore deploy -y to apply it."

@@ -14,6 +14,15 @@ confirm "Continue?" || die "Stopped."
 
 cd "$WORKSHOP/backends"
 npm install --no-audit --no-fund
+
+if ! aws ssm get-parameter --name /cdk-bootstrap/hnb659fds/version >/dev/null 2>&1; then
+  echo
+  echo "CDK isn't bootstrapped in $AWS_REGION for this account yet. Bootstrapping creates an S3 bucket,"
+  echo "an ECR repository and IAM roles that CDK (and agentcore deploy) use to deploy."
+  confirm "Bootstrap now?" || die "Stopped. When you're ready: cd \$WORKSHOP/backends && npx cdk bootstrap"
+  npx cdk bootstrap "aws://$account/$AWS_REGION"
+fi
+
 npx cdk deploy AgentCoreWorkshopBackends --require-approval broadening
 echo
 echo "Done. Run: source \$WORKSHOP/scripts/env.sh"

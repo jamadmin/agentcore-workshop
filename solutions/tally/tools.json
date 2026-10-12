@@ -21,7 +21,7 @@
   },
   {
     "name": "get_usage",
-    "description": "Get a customer's metered usage for one month.",
+    "description": "Get how many people at a customer used the software in one month.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -50,7 +50,7 @@
         },
         "amount": {
           "type": "integer",
-          "description": "Credit in whole US dollars"
+          "description": "Credit in whole Singapore dollars"
         },
         "reason": {
           "type": "string"
@@ -65,7 +65,7 @@
   },
   {
     "name": "explain_invoice",
-    "description": "Explain how an invoice total was calculated: every subscription that was active in the period, the usage rated against each, and every fee and credit.",
+    "description": "Explain how an invoice total was worked out: every plan the customer was billed for in that month, and what each one cost.",
     "inputSchema": {
       "type": "object",
       "properties": {

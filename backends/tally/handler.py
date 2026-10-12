@@ -4,15 +4,14 @@ Called by AgentCore Gateway (tool name in the Lambda context), by the agent's ow
 boto3 tools in tally/agent/agent.py, and by scripts/tally.sh, all with
 {"tool": "<name>", ...arguments} when called directly.
 
-The story: Kettle & Co upgraded from Starter to Scale on 14 March 2026, but the
-Starter subscription was never closed. March was billed on both plans, so the
-invoice is $4,812.00 instead of $1,200.00. The pricing code is right; the data
-is wrong. explain_invoice shows it. issue_credit has no limit at all.
+The story: Kettle & Co moved from the Basic plan (S$300 a month) to the Pro plan
+(S$900 a month) on 1 March 2026, but nobody cancelled Basic. March was billed for
+both: S$1,200 instead of S$900. explain_invoice shows it. issue_credit has no limit.
+All amounts are whole Singapore dollars.
 """
 import os
 import uuid
 from datetime import datetime, timezone
-from decimal import Decimal
 
 import boto3
 from boto3.dynamodb.conditions import Key
@@ -20,93 +19,21 @@ from boto3.dynamodb.conditions import Key
 TABLE_NAME = os.environ.get("CREDITS_TABLE", "agentcore-workshop-tally-credits")
 
 CUSTOMERS = {
-    "kettle": {"name": "Kettle & Co", "plan_now": "Scale", "billing_email": "accounts@kettle.example"},
-    "lumio": {"name": "Lumio Labs", "plan_now": "Starter", "billing_email": "billing@lumio.example"},
+    "kettle": {"name": "Kettle & Co", "billing_email": "accounts@kettle.example"},
 }
 
-PLANS = {
-    "Starter": {"platform_fee": "310.00", "included_api_calls": 100_000, "overage_per_call": "0.008"},
-    "Scale": {"platform_fee": "899.00", "included_api_calls": 1_000_000, "overage_per_call": "0.002"},
+PLANS = {"Basic": 300, "Pro": 900}  # S$ per month
+
+# Plans billed in each month, as the billing system recorded them.
+BILLED = {
+    ("kettle", "2026-01"): [("Basic", "2025-06-01", None)],
+    ("kettle", "2026-02"): [("Basic", "2025-06-01", None)],
+    # Upgraded to Pro on 1 March, but Basic was never cancelled.
+    ("kettle", "2026-03"): [("Basic", "2025-06-01", None), ("Pro", "2026-03-01", None)],
 }
 
-SUBSCRIPTIONS = {
-    "kettle": [
-        {"subscription_id": "sub_kettle_starter", "plan": "Starter", "started": "2025-06-01", "ended": None},
-        {"subscription_id": "sub_kettle_scale", "plan": "Scale", "started": "2026-03-14", "ended": None},
-    ],
-    "lumio": [
-        {"subscription_id": "sub_lumio_starter", "plan": "Starter", "started": "2025-11-01", "ended": None},
-    ],
-}
-
-USAGE = {
-    ("kettle", "2026-01"): [("2026-01-01", "2026-01-31", 205_000)],
-    ("kettle", "2026-02"): [("2026-02-01", "2026-02-28", 211_000)],
-    ("kettle", "2026-03"): [("2026-03-01", "2026-03-13", 168_500), ("2026-03-14", "2026-03-31", 429_000)],
-    ("lumio", "2026-03"): [("2026-03-01", "2026-03-31", 84_000)],
-}
-
-# Explanations as the billing engine produced them. Totals tie out exactly.
-EXPLANATIONS = {
-    ("kettle", "INV-2026-01"): {
-        "period": "2026-01-01 to 2026-01-31",
-        "subscriptions_active_in_period": [
-            {"subscription_id": "sub_kettle_starter", "plan": "Starter", "started": "2025-06-01", "ended": None, "active_days": 31, "days_in_period": 31},
-        ],
-        "platform_fees": [{"subscription_id": "sub_kettle_starter", "plan": "Starter", "monthly_fee": 310.00, "charged": 310.00}],
-        "usage_rated": [
-            {"subscription_id": "sub_kettle_starter", "plan": "Starter", "rated_period": "2026-01-01 to 2026-01-31", "api_calls_rated": 205_000,
-             "included_api_calls": 100_000, "overage_calls": 105_000, "overage_per_call": 0.008, "charged": 840.00},
-        ],
-        "credits": [],
-        "total": 1150.00,
-    },
-    ("kettle", "INV-2026-02"): {
-        "period": "2026-02-01 to 2026-02-28",
-        "subscriptions_active_in_period": [
-            {"subscription_id": "sub_kettle_starter", "plan": "Starter", "started": "2025-06-01", "ended": None, "active_days": 28, "days_in_period": 28},
-        ],
-        "platform_fees": [{"subscription_id": "sub_kettle_starter", "plan": "Starter", "monthly_fee": 310.00, "charged": 310.00}],
-        "usage_rated": [
-            {"subscription_id": "sub_kettle_starter", "plan": "Starter", "rated_period": "2026-02-01 to 2026-02-28", "api_calls_rated": 211_000,
-             "included_api_calls": 100_000, "overage_calls": 111_000, "overage_per_call": 0.008, "charged": 888.00},
-        ],
-        "credits": [],
-        "total": 1198.00,
-    },
-    ("kettle", "INV-2026-03"): {
-        "period": "2026-03-01 to 2026-03-31",
-        "subscriptions_active_in_period": [
-            {"subscription_id": "sub_kettle_starter", "plan": "Starter", "started": "2025-06-01", "ended": None, "active_days": 31, "days_in_period": 31},
-            {"subscription_id": "sub_kettle_scale", "plan": "Scale", "started": "2026-03-14", "ended": None, "active_days": 18, "days_in_period": 31},
-        ],
-        "platform_fees": [
-            {"subscription_id": "sub_kettle_starter", "plan": "Starter", "monthly_fee": 310.00, "charged": 310.00},
-            {"subscription_id": "sub_kettle_scale", "plan": "Scale", "monthly_fee": 899.00, "charged": 522.00, "proration": "18 of 31 days"},
-        ],
-        "usage_rated": [
-            {"subscription_id": "sub_kettle_starter", "plan": "Starter", "rated_period": "2026-03-01 to 2026-03-31", "api_calls_rated": 597_500,
-             "included_api_calls": 100_000, "overage_calls": 497_500, "overage_per_call": 0.008, "charged": 3980.00},
-            {"subscription_id": "sub_kettle_scale", "plan": "Scale", "rated_period": "2026-03-14 to 2026-03-31", "api_calls_rated": 429_000,
-             "included_api_calls": 1_000_000, "overage_calls": 0, "overage_per_call": 0.002, "charged": 0.00},
-        ],
-        "credits": [],
-        "total": 4812.00,
-    },
-    ("lumio", "INV-2026-03"): {
-        "period": "2026-03-01 to 2026-03-31",
-        "subscriptions_active_in_period": [
-            {"subscription_id": "sub_lumio_starter", "plan": "Starter", "started": "2025-11-01", "ended": None, "active_days": 31, "days_in_period": 31},
-        ],
-        "platform_fees": [{"subscription_id": "sub_lumio_starter", "plan": "Starter", "monthly_fee": 310.00, "charged": 310.00}],
-        "usage_rated": [
-            {"subscription_id": "sub_lumio_starter", "plan": "Starter", "rated_period": "2026-03-01 to 2026-03-31", "api_calls_rated": 84_000,
-             "included_api_calls": 100_000, "overage_calls": 0, "overage_per_call": 0.008, "charged": 0.00},
-        ],
-        "credits": [],
-        "total": 310.00,
-    },
-}
+# How many people at the customer used the software. Not part of the bill.
+USERS = {("kettle", "2026-01"): 9, ("kettle", "2026-02"): 11, ("kettle", "2026-03"): 12}
 
 _table = None
 
@@ -123,56 +50,57 @@ def norm_customer(args):
     return cid if cid in CUSTOMERS else None
 
 
-def norm_invoice(args):
-    return str(args.get("invoice_id", "")).strip().upper()
+def month_of(args):
+    """INV-2026-03 -> 2026-03."""
+    inv = str(args.get("invoice_id", "")).strip().upper()
+    return inv, (inv[4:] if inv.startswith("INV-") else "")
 
 
 def get_invoice(args):
-    cid, inv = norm_customer(args), norm_invoice(args)
-    exp = EXPLANATIONS.get((cid, inv))
-    if not exp:
+    cid, (inv, month) = norm_customer(args), month_of(args)
+    plans = BILLED.get((cid, month))
+    if not plans:
         return {"error": f"No invoice {inv} for customer {args.get('customer_id')}"}
-    fees = sum(Decimal(str(f["charged"])) for f in exp["platform_fees"])
-    usage = sum(Decimal(str(u["charged"])) for u in exp["usage_rated"])
-    month = exp["period"][:7]
-    # The invoice itself only shows totals per charge type. The detail is in explain_invoice.
+    total = sum(PLANS[p] for p, _, _ in plans)
+    # The invoice itself shows one line. The breakdown is in explain_invoice.
     return {
         "customer_id": cid,
         "customer": CUSTOMERS[cid]["name"],
         "invoice_id": inv,
-        "period": exp["period"],
-        "currency": "USD",
-        "status": "issued",
-        "lines": [
-            {"description": f"Platform fees, {month}", "amount": float(fees)},
-            {"description": f"Usage charges, {month}", "amount": float(usage)},
-        ],
-        "total": exp["total"],
+        "month": month,
+        "currency": "SGD",
+        "lines": [{"description": f"Subscription fees, {month}", "amount": total}],
+        "total": total,
     }
 
 
 def get_usage(args):
     cid = norm_customer(args)
     month = str(args.get("month", "")).strip()[:7]
-    rows = USAGE.get((cid, month))
-    if not rows:
+    users = USERS.get((cid, month))
+    if users is None:
         return {"error": f"No usage recorded for {args.get('customer_id')} in {month}"}
-    return {
-        "customer_id": cid,
-        "month": month,
-        "metric": "api_calls",
-        "total_api_calls": sum(r[2] for r in rows),
-        "by_period": [{"from": a, "to": b, "api_calls": n} for a, b, n in rows],
-    }
+    return {"customer_id": cid, "month": month, "active_users": users,
+            "note": "Usage doesn't change the bill. Plans are a flat monthly fee."}
 
 
 def explain_invoice(args):
-    cid, inv = norm_customer(args), norm_invoice(args)
-    exp = EXPLANATIONS.get((cid, inv))
-    if not exp:
+    cid, (inv, month) = norm_customer(args), month_of(args)
+    plans = BILLED.get((cid, month))
+    if not plans:
         return {"error": f"No invoice {inv} for customer {args.get('customer_id')}"}
-    return {"customer_id": cid, "invoice_id": inv, "currency": "USD", **exp,
-            "pricing_rules": {"plans": PLANS, "proration": "A platform fee is prorated by active days when a subscription starts or ends in the period."}}
+    return {
+        "customer_id": cid,
+        "invoice_id": inv,
+        "month": month,
+        "currency": "SGD",
+        "plans_billed": [
+            {"plan": p, "monthly_fee": PLANS[p], "started": start, "cancelled": end}
+            for p, start, end in plans
+        ],
+        "total": sum(PLANS[p] for p, _, _ in plans),
+        "plan_prices": PLANS,
+    }
 
 
 def issue_credit(args):
@@ -182,7 +110,7 @@ def issue_credit(args):
     try:
         amount = int(args.get("amount"))
     except (TypeError, ValueError):
-        return {"error": "amount must be a whole number of US dollars"}
+        return {"error": "amount must be a whole number of Singapore dollars"}
     if amount <= 0:
         return {"error": "amount must be positive"}
     # No upper limit. That's the problem the workshop solves with Policy.
@@ -190,7 +118,7 @@ def issue_credit(args):
         "customer_id": cid,
         "credit_id": f"CR-{datetime.now(timezone.utc):%Y%m%d%H%M%S}-{uuid.uuid4().hex[:4].upper()}",
         "amount": amount,
-        "currency": "USD",
+        "currency": "SGD",
         "reason": str(args.get("reason", ""))[:500],
         "issued_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "applies_to": "next invoice",
@@ -203,7 +131,7 @@ def list_credits(args):
     cid = str(args.get("customer_id", "")).strip().lower()
     items = table().query(KeyConditionExpression=Key("customer_id").eq(cid)).get("Items", [])
     credits = [{**i, "amount": int(i["amount"])} for i in sorted(items, key=lambda i: i["issued_at"])]
-    return {"customer_id": cid, "credits": credits, "total_usd": sum(c["amount"] for c in credits)}
+    return {"customer_id": cid, "credits": credits, "total_sgd": sum(c["amount"] for c in credits)}
 
 
 def reset_credits(args):

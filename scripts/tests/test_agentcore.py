@@ -85,6 +85,9 @@ class LookupTests(StubbedTest):
         with redirect_stdout(out):
             ac.cmd_gateway_url("tally-gw")
         self.assertTrue(out.getvalue().startswith("https://"))
+        self.assertTrue(out.getvalue().strip().endswith("/mcp"))
+        self.assertEqual(ac.mcp_url("https://x.example.com"), "https://x.example.com/mcp")
+        self.assertEqual(ac.mcp_url("https://x.example.com/mcp"), "https://x.example.com/mcp")
         self.gateway_list(name="TallyTools-tally-gw")
         self.get_gateway(name="TallyTools-tally-gw")
         out = io.StringIO()

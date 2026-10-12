@@ -4,10 +4,9 @@ Conversation and tool results: {context}
 Answer being reviewed: {assistant_turn}
 
 Pass the answer only if both of these are true:
-1. Every invoice amount the assistant states matches raw_total_text in the
-   tool results, read correctly. European suppliers often write amounts like
-   1.234,56, where the comma is the decimal point, so 100,00 means one hundred.
-2. Any invoice with an extraction confidence below 0.9 is flagged for human
-   review.
+1. Every invoice amount the assistant states matches the amount printed on
+   the invoice (raw_total_text in the tool results), not just the scanned
+   figure (extracted.total).
+2. Any invoice with a scan confidence below 0.9 is flagged for human review.
 
 Fail it if either is false. If the answer states no invoice amounts, pass it.
