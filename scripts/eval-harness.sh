@@ -9,7 +9,7 @@
 (return 0 2>/dev/null) && { echo "This is a script, so run it rather than sourcing it: ${WORKSHOP:-.}/scripts/eval-harness.sh" >&2; return 1; }
 set -euo pipefail
 source "$(dirname "$0")/lib/common.sh"
-need agentcore "Install it with: npm install -g @aws/agentcore"
+need agentcore "Install it with: sudo npm install -g @aws/agentcore"
 [[ $# -ge 2 ]] || die "Usage: eval-harness.sh <harness> <evaluator> [<evaluator> ...]   (DAYS=1 by default)"
 
 harness="$1"; shift

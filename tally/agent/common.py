@@ -21,7 +21,7 @@ def parse_args():
 
 
 def model():
-    return BedrockModel(model_id=MODEL_ID, region_name=os.environ.get("AWS_REGION", "us-west-2"))
+    return BedrockModel(model_id=MODEL_ID, region_name=os.environ.get("AWS_REGION", "us-east-1"))
 
 
 def system_prompt(customer_id):

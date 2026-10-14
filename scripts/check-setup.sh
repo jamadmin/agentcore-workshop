@@ -28,7 +28,7 @@ for tool in aws node uv agentcore python3; do
     esac
   else
     hint="ask a facilitator"
-    [[ "$tool" == agentcore ]] && hint="npm install -g @aws/agentcore"
+    [[ "$tool" == agentcore ]] && hint="sudo npm install -g @aws/agentcore"
     line FAIL "$tool" "not found: $hint"
   fi
 done
@@ -39,10 +39,10 @@ if ident="$(aws sts get-caller-identity --query Account --output text 2>&1)"; th
 else
   line FAIL "Credentials" "no working AWS credentials. Open a new terminal from the code editor"
 fi
-if [[ "$AWS_REGION" == "${WORKSHOP_REGION:-us-west-2}" ]]; then
+if [[ "$AWS_REGION" == "${WORKSHOP_REGION:-us-east-1}" ]]; then
   line PASS "Region" "$AWS_REGION"
 else
-  line FAIL "Region" "$AWS_REGION; the workshop runs in ${WORKSHOP_REGION:-us-west-2}"
+  line FAIL "Region" "$AWS_REGION; the workshop runs in ${WORKSHOP_REGION:-us-east-1}"
 fi
 
 # One tiny model call
