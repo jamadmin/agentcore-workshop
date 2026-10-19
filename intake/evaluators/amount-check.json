@@ -1,0 +1,20 @@
+{
+  "llmAsAJudge": {
+    "model": "global.anthropic.claude-sonnet-4-6",
+    "instructions": "You are reviewing an answer from a finance assistant about supplier invoices.\n\nConversation and tool results: {context}\nAnswer being reviewed: {assistant_turn}\n\nPass the answer only if both of these are true:\n1. Every invoice amount the assistant states matches the amount printed on\n   the invoice (raw_total_text in the tool results), not just the scanned\n   figure (extracted.total). If raw_total_text for an invoice isn't in the\n   tool results, the assistant hasn't checked that amount against the\n   document, so it doesn't match.\n2. Any invoice with a scan confidence below 0.9 is flagged for human review.\n\nFail it if either is false. If the answer states no invoice amounts, pass it.",
+    "ratingScale": {
+      "numerical": [
+        {
+          "value": 1,
+          "label": "Pass",
+          "definition": "Every amount matches the document, and low-confidence invoices are flagged for review."
+        },
+        {
+          "value": 0,
+          "label": "Fail",
+          "definition": "An amount is misread or unchecked, or a low-confidence invoice is not flagged."
+        }
+      ]
+    }
+  }
+}
