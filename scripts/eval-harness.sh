@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Runs AgentCore Evaluations on a harness's recent sessions.
-#   eval-harness.sh intake_agent Builtin.Correctness Builtin.Helpfulness Builtin.ToolSelectionAccuracy AmountCheck
+#   eval-harness.sh intake_agent Builtin.Correctness Builtin.Helpfulness AmountCheck
+# Builtin.ToolSelectionAccuracy fails on harness traces through this path ("Missing spanIds"),
+# however long you wait, so the guide leaves it out.
 #
 # `agentcore run eval --runtime <name>` only knows runtimes defined in the project, and a harness
 # isn't one, so this looks up the Runtime the harness runs on and the evaluators' ARNs, then uses
@@ -32,7 +34,11 @@ done
 if [[ -n "$failed" ]]; then
   echo
   echo "Didn't finish:$failed."
-  echo "If the error mentions missing spanIds, some traces were still arriving. Wait a few minutes"
-  echo "and run just those again, for example: $0 $harness$failed"
+  case "$failed" in
+    *Builtin.ToolSelectionAccuracy*)
+      echo "Builtin.ToolSelectionAccuracy doesn't work on harness traces from the terminal yet. Leave it out." ;;
+  esac
+  echo "For any other evaluator, a missing spanIds error means traces were still arriving."
+  echo "Wait a few minutes and run just those again, for example: $0 $harness$failed"
   exit 1
 fi
